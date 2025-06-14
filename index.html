@@ -215,8 +215,8 @@
     <a href="mailto:contacttodelete@gmail.com" style="color: #00d2fc; text-decoration: underline; font-weight: bold;">contacttodelete@gmail.com</a>
   </p>
 </footer>
-<script>
-  const sheetID = '1EaRHwtC9Pz9XQcB9r-lhM3-YsFjne5B-lxO3EyQUjR8';
+    <script>
+  const sheetID = '1pRGLJtoxpzhS9s7QGPGud47YOQZm30Ag9gPDrp3bhzM';
   const sheetName = 'Sheet1';
   const query = encodeURIComponent('SELECT A, B, C');
   const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
@@ -289,10 +289,15 @@
       card.innerHTML = `
         <img src="${post.imageUrl}" alt="${post.title}" oncontextmenu="return false;" draggable="false" loading="lazy" decoding="async"/>
         <h3>${post.title}</h3>
-        <button onclick="alert('Access system disabled');">Watch</button>
+        <button onclick="handleWatchClick('${encodeURIComponent(post.watchUrl)}', '${encodeURIComponent(post.title)}')">Watch</button>
       `;
       grid.appendChild(card);
     });
+  }
+
+  function handleWatchClick(encodedUrl, encodedTitle) {
+    const decodedUrl = decodeURIComponent(encodedUrl);
+    window.open(decodedUrl, '_blank');
   }
 
   function renderPagination() {
@@ -367,6 +372,7 @@
 
   initParticles();
   animateParticles();
-</script>
+      </script>        
+
 </body>
 </html>
