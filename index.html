@@ -236,31 +236,33 @@
   const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
   const postsPerPage = 10;
   let allPosts = [];
-
+  
   const emojiList = ['🔥', '🎬', '🌟', '🚀', '✨', '🎥', '💥', '🎞️', '🎉', '📽️'];
-
+  
   function getPageFromURL() {
     const params = new URLSearchParams(window.location.search);
     const page = parseInt(params.get('page'));
     return isNaN(page) || page < 1 ? 1 : page;
   }
-
+  
   function updateURLPageParam(page) {
     const params = new URLSearchParams(window.location.search);
     params.set('page', page);
     history.replaceState({}, '', `${location.pathname}?${params}`);
   }
-
+  
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  
   const skeletonKey = 'skeletonLastShown';
   const now = Date.now();
   const lastShown = localStorage.getItem(skeletonKey);
   const showSkeleton = !lastShown || now - parseInt(lastShown) > 86400000;
-
-  if (showSkeleton) {
-    showSkeletons();
-    localStorage.setItem(skeletonKey, now.toString());
-  }
-
+  
   fetch(url)
     .then(res => res.text())
     .then(rep => {
@@ -272,10 +274,19 @@
         imageUrl: row.c[1]?.v || '',
         watchUrl: row.c[2]?.v || '#'
       }));
-
+      
+      // Shuffle every 1 hour
+      const lastShuffle = localStorage.getItem('shuffleLastTime');
+      if (!lastShuffle || now - parseInt(lastShuffle) > 30000) {
+        shuffleArray(allPosts);
+        localStorage.setItem('shuffleLastTime', now.toString());
+      }
+      
       const page = getPageFromURL();
-
+      
       if (showSkeleton) {
+        showSkeletons();
+        localStorage.setItem(skeletonKey, now.toString());
         setTimeout(() => {
           removeSkeletons();
           renderPagination(page);
@@ -287,7 +298,7 @@
         renderPosts(page);
       }
     });
-
+  
   function showSkeletons() {
     const grid = document.getElementById('postGrid');
     for (let i = 0; i < postsPerPage; i++) {
@@ -301,18 +312,18 @@
       grid.appendChild(skeleton);
     }
   }
-
+  
   function removeSkeletons() {
     document.getElementById('postGrid').innerHTML = '';
   }
-
+  
   function renderPosts(page) {
     const grid = document.getElementById('postGrid');
     grid.innerHTML = '';
     const start = (page - 1) * postsPerPage;
     const end = start + postsPerPage;
     const pagePosts = allPosts.slice(start, end);
-
+    
     pagePosts.forEach((post, index) => {
       const emoji = emojiList[index % emojiList.length];
       const card = document.createElement('div');
@@ -327,45 +338,45 @@
       grid.appendChild(card);
     });
   }
-
+  
   function handleWatchClick(encodedUrl, encodedTitle) {
     const url = decodeURIComponent(encodedUrl);
     window.open(url, '_blank');
   }
-
+  
   function renderPagination(currentPage) {
     const pagination = document.getElementById('pagination');
     const totalPages = Math.ceil(allPosts.length / postsPerPage);
     pagination.innerHTML = '';
-
+    
     for (let i = 1; i <= totalPages; i++) {
       const btn = document.createElement('button');
       btn.textContent = `📄 ${i}`;
       if (i === currentPage) btn.classList.add('active');
-
+      
       btn.addEventListener('click', () => {
         renderPosts(i);
         updateURLPageParam(i);
         document.querySelectorAll('.pagination button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
       });
-
+      
       pagination.appendChild(btn);
     }
   }
-
+  
   const canvas = document.getElementById('particles-bg');
   const ctx = canvas.getContext('2d');
   let particles = [];
-
+  
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   }
-
+  
   window.addEventListener('resize', resize);
   resize();
-
+  
   class Particle {
     constructor() {
       this.x = Math.random() * canvas.width;
@@ -374,14 +385,14 @@
       this.speedX = (Math.random() - 0.5) * 0.7;
       this.speedY = (Math.random() - 0.5) * 0.7;
     }
-
+    
     draw() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = 'white';
       ctx.fill();
     }
-
+    
     update() {
       this.x += this.speedX;
       this.y += this.speedY;
@@ -389,14 +400,14 @@
       if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
     }
   }
-
+  
   function initParticles() {
     particles = [];
     for (let i = 0; i < 150; i++) {
       particles.push(new Particle());
     }
   }
-
+  
   function animateParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
@@ -405,7 +416,7 @@
     });
     requestAnimationFrame(animateParticles);
   }
-
+  
   initParticles();
   animateParticles();
 </script>
